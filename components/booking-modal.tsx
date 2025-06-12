@@ -1,16 +1,87 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { CheckCircle } from "lucide-react"
+
+// Create simplified versions of the components we need
+const Card = ({ className, children, ...props }) => (
+  <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`} {...props}>
+    {children}
+  </div>
+)
+
+const CardContent = ({ className, children, ...props }) => (
+  <div className={`p-6 pt-0 ${className}`} {...props}>
+    {children}
+  </div>
+)
+
+const Input = ({ className, ...props }) => (
+  <input
+    className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+    {...props}
+  />
+)
+
+const Textarea = ({ className, ...props }) => (
+  <textarea
+    className={`flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+    {...props}
+  />
+)
+
+const Label = ({ className, ...props }) => (
+  <label
+    className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`}
+    {...props}
+  />
+)
+
+const Select = ({ children, value, onValueChange, className }) => {
+  return (
+    <div className={`relative ${className}`}>
+      <select
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {children}
+      </select>
+    </div>
+  )
+}
+
+const SelectTrigger = ({ className, children }) => <div className={className}>{children}</div>
+const SelectValue = ({ placeholder }) =>
+  !placeholder ? null : <div className="text-muted-foreground">{placeholder}</div>
+const SelectContent = ({ children }) => children
+const SelectItem = ({ value, children }) => <option value={value}>{children}</option>
+
+const Dialog = ({ open, onOpenChange, children }) => {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
+      <div className="z-50 bg-background p-6 rounded-lg shadow-lg max-w-md w-full relative">
+        {children}
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute top-4 right-4 rounded-full p-1 text-gray-500 hover:bg-gray-100"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const DialogTrigger = ({ asChild, children }) => children
+const DialogContent = ({ className, children }) => <div className={className}>{children}</div>
+const DialogHeader = ({ children }) => <div className="mb-4">{children}</div>
+const DialogTitle = ({ className, children }) => <h2 className={`text-lg font-semibold ${className}`}>{children}</h2>
 
 interface BookingModalProps {
   trigger: React.ReactNode
@@ -266,42 +337,52 @@ export default function BookingModal({ trigger, service }: BookingModalProps) {
     }
   }
 
+  const openModal = () => {
+    setIsOpen(true)
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] bg-soft-cream border-warm-stone">
-        <DialogHeader>
-          <DialogTitle className="text-deep-taupe font-playfair">Book Your Free Consultation</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          {renderStep()}
-          <div className="flex justify-between mt-8">
-            {step > 1 && step < 4 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep(step - 1)}
-                className="border-warm-stone text-deep-taupe hover:bg-warm-stone hover:text-rich-brown"
-              >
-                Back
-              </Button>
-            )}
-            {step < 4 && (
-              <Button
-                type="submit"
-                className="btn-primary ml-auto"
-                disabled={
-                  (step === 1 && (!formData.firstName || !formData.lastName || !formData.email || !formData.phone)) ||
-                  (step === 2 && !formData.service) ||
-                  (step === 3 && !formData.preferredTime)
-                }
-              >
-                {step === 3 ? "Book Consultation" : "Next"}
-              </Button>
-            )}
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <div onClick={openModal}>{trigger}</div>
+      {isOpen && (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>{trigger}</DialogTrigger>
+          <DialogContent className="sm:max-w-[500px] bg-soft-cream border-warm-stone">
+            <DialogHeader>
+              <DialogTitle className="text-deep-taupe font-playfair">Book Your Free Consultation</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit}>
+              {renderStep()}
+              <div className="flex justify-between mt-8">
+                {step > 1 && step < 4 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStep(step - 1)}
+                    className="border-warm-stone text-deep-taupe hover:bg-warm-stone hover:text-rich-brown"
+                  >
+                    Back
+                  </Button>
+                )}
+                {step < 4 && (
+                  <Button
+                    type="submit"
+                    className="btn-primary ml-auto"
+                    disabled={
+                      (step === 1 &&
+                        (!formData.firstName || !formData.lastName || !formData.email || !formData.phone)) ||
+                      (step === 2 && !formData.service) ||
+                      (step === 3 && !formData.preferredTime)
+                    }
+                  >
+                    {step === 3 ? "Book Consultation" : "Next"}
+                  </Button>
+                )}
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   )
 }
